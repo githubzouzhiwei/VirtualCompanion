@@ -9,9 +9,12 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Audio } from 'expo-av';
 import * as Speech from 'expo-speech';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChatMessage, VirtualCharacter } from './src/types';
 import { sendToQwen } from './src/services/qwen';
 import { speechToText } from './src/services/asr';
@@ -30,6 +33,7 @@ export default function App() {
   const [volumeLevel, setVolumeLevel] = useState(0);
   const [isAITyping, setIsAITyping] = useState(false);
   const [character] = useState<VirtualCharacter>(DEFAULT_CHARACTER);
+  const insets = useSafeAreaInsets();
   
   const recordingRef = useRef<Audio.Recording | null>(null);
   const volumeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -160,7 +164,7 @@ export default function App() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* 顶部栏 */}
       <View style={styles.header}>
         <Image source={{ uri: character.image }} style={styles.characterAvatar} />
@@ -196,7 +200,7 @@ export default function App() {
       </ScrollView>
 
       {/* 音量条 */}
-      <View style={styles.volumeContainer}>
+      <View style={[styles.volumeContainer, { paddingBottom: insets.bottom + 16 }]}>
         <View style={styles.volumeBarOuter}>
           <View style={[styles.volumeBarInner, { width: `${volumeLevel * 100}%` }]} />
         </View>
@@ -206,31 +210,36 @@ export default function App() {
       </View>
 
       {/* 输入区域 */}
-      <View style={styles.inputContainer}>
-        <TouchableOpacity
-          style={[styles.micButton, isRecording && styles.micButtonActive]}
-          onPressIn={startRecording}
-          onPressOut={stopRecording}
-        >
-          <Text style={styles.micButtonText}>{isRecording ? '🔴' : '🎤'}</Text>
-        </TouchableOpacity>
-        
-        <TextInput
-          style={styles.textInput}
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder="输入文字..."
-          onSubmitEditing={handleTextSubmit}
-        />
-        
-        <TouchableOpacity
-          style={styles.sendButton}
-          onPress={handleTextSubmit}
-        >
-          <Text style={styles.sendButtonText}>发送</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
+        <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 12 }]}>
+          <TouchableOpacity
+            style={[styles.micButton, isRecording && styles.micButtonActive]}
+            onPressIn={startRecording}
+            onPressOut={stopRecording}
+          >
+            <Text style={styles.micButtonText}>{isRecording ? '🔴' : '🎤'}</Text>
+          </TouchableOpacity>
+          
+          <TextInput
+            style={styles.textInput}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="输入文字..."
+            onSubmitEditing={handleTextSubmit}
+          />
+          
+          <TouchableOpacity
+            style={styles.sendButton}
+            onPress={handleTextSubmit}
+          >
+            <Text style={styles.sendButtonText}>发送</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
